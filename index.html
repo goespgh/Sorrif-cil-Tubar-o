@@ -1,0 +1,588 @@
+<title>Dashboard de Orçamentos</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --card-bg:        #ffffff;
+    --series-blue:    #2a78d6;
+    --series-orange:  #eb6834;
+    --series-aqua:    #1baf7a;
+    --series-yellow:  #eda100;
+    --series-magenta: #e87ba4;
+    --series-green:   #008300;
+    --series-violet:  #4a3aa7;
+    --series-red:     #e34948;
+    --good:           #0ca30c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --card-bg:        #232322;
+      --series-blue:    #3987e5;
+      --series-orange:  #d95926;
+      --series-aqua:    #199e70;
+      --series-yellow:  #c98500;
+      --series-magenta: #d55181;
+      --series-green:   #008300;
+      --series-violet:  #9085e9;
+      --series-red:     #e66767;
+      --good:           #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --card-bg:        #232322;
+    --series-blue:    #3987e5;
+    --series-orange:  #d95926;
+    --series-aqua:    #199e70;
+    --series-yellow:  #c98500;
+    --series-magenta: #d55181;
+    --series-green:   #008300;
+    --series-violet:  #9085e9;
+    --series-red:     #e66767;
+    --good:           #0ca30c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  header.top { margin-bottom: 24px; }
+  header.top h1 { font-size: 22px; font-weight: 650; margin: 0 0 4px; }
+  header.top p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 18px;
+  }
+  section { margin-bottom: 28px; }
+  .section-title { font-size: 15px; font-weight: 650; margin: 0 0 3px; }
+  .section-sub { font-size: 12.5px; color: var(--text-secondary); margin: 0 0 14px; }
+
+  /* Stat tiles */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 760px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-tile { display: flex; flex-direction: column; gap: 4px; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); }
+  .stat-value { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+  .stat-cap { font-size: 11.5px; color: var(--text-muted); }
+
+  /* two-col layout */
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  @media (max-width: 860px) { .cols-2 { grid-template-columns: 1fr; } }
+  .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .cols-3 { grid-template-columns: 1fr; } }
+
+  /* media group cards */
+  .media-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  @media (max-width: 640px) { .media-grid { grid-template-columns: repeat(2, 1fr); } }
+  .media-card {
+    border-left: 4px solid var(--c);
+    background: var(--card-bg);
+    border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 12px;
+    font-size: 12px;
+  }
+  .media-card .mc-title { font-weight: 650; font-size: 12.5px; margin-bottom: 8px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .media-card .mc-row { padding: 3px 0; }
+  .media-card .mc-row span { display: block; color: var(--text-muted); font-size: 10.5px; }
+  .media-card .mc-row b { display: block; color: var(--text-primary); font-weight: 650; font-variant-numeric: tabular-nums; font-size: 12.5px; white-space: nowrap; }
+
+  /* legend */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-secondary); }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* horizontal bar rows */
+  .hbar-list { display: flex; flex-direction: column; gap: 10px; }
+  .hbar-row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; }
+  .hbar-row .lbl {
+    font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hbar-track { position: relative; height: 20px; background: transparent; }
+  .hbar-fill {
+    height: 20px; border-radius: 4px; background: var(--series-blue);
+    display: flex; align-items: center;
+    min-width: 2px;
+  }
+  .hbar-val { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .hbar-val.inside { color: #fff; margin-left: 0; padding-left: 8px; }
+
+  /* grouped (2-series) bars */
+  .gbar-row { display: grid; grid-template-columns: 168px 1fr; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .gbar-row:last-child { margin-bottom: 0; }
+  .gbar-row .lbl { font-size: 12.5px; color: var(--text-primary); font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gbar-bars { display: flex; flex-direction: column; gap: 3px; }
+  .gbar-track { display: flex; align-items: center; height: 16px; }
+  .gbar-fill { height: 16px; border-radius: 4px; min-width: 2px; }
+  .gbar-fill.a { background: var(--series-blue); }
+  .gbar-fill.b { background: var(--series-aqua); }
+  .gbar-tag { font-size: 10.5px; color: var(--text-secondary); margin-left: 7px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* donut */
+  .donut-wrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .donut { width: 148px; height: 148px; border-radius: 50%; position: relative; flex: none; }
+  .donut::after {
+    content: ""; position: absolute; inset: 22px; border-radius: 50%; background: var(--card-bg);
+  }
+  .donut-center { position: absolute; inset: 22px; display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 2; }
+  .donut-center b { font-size: 18px; }
+  .donut-center span { font-size: 10.5px; color: var(--text-secondary); }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; flex: 1; min-width: 160px; }
+  .donut-legend .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .donut-legend .item .k { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); }
+  .donut-legend .item .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .donut-legend .item .v { font-weight: 650; font-variant-numeric: tabular-nums; }
+
+  /* chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip {
+    border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary);
+    font-size: 12.5px; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .chip:hover { background: var(--gridline); }
+  .chip.active { background: var(--series-blue); border-color: var(--series-blue); color: #fff; font-weight: 600; }
+
+  /* table */
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.data-table th, table.data-table td {
+    padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--gridline);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  table.data-table th:first-child, table.data-table td:first-child { text-align: left; font-variant-numeric: normal; }
+  table.data-table th { color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .02em; }
+  table.data-table tbody tr:hover { background: var(--gridline); }
+  .table-scroll { overflow-x: auto; }
+
+  .note {
+    font-size: 11.5px; color: var(--text-muted); margin-top: 10px; line-height: 1.5;
+  }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 650; }
+
+  .empty-msg { font-size: 13px; color: var(--text-muted); padding: 20px 0; text-align: center; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Dashboard de Orçamentos &amp; Conversão</h1>
+    <p id="headerSub">carregando…</p>
+  </header>
+
+  <section class="card">
+    <div class="section-title">Visão geral</div>
+    <div class="section-sub">Todos os leads da planilha, todos os canais.</div>
+    <div class="stat-grid" id="kpiGrid"></div>
+  </section>
+
+  <section class="cols-2">
+    <div class="card">
+      <div class="section-title">Situação dos leads</div>
+      <div class="section-sub">Efetivado × Aberto × Não Contatar</div>
+      <div id="statusDonut"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Grupos de mídia</div>
+      <div class="section-sub">Origem (coluna J) agrupada por tipo de canal</div>
+      <div class="media-grid" id="mediaGrid"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Desempenho por canal (origem)</div>
+    <div class="section-sub">Valor orçado × valor efetivado por canal — ordenado por valor orçado</div>
+    <div class="gbar-list" id="channelBars"></div>
+    <div class="legend">
+      <span class="item"><span class="swatch" style="background:var(--series-blue)"></span>Valor orçado</span>
+      <span class="item"><span class="swatch" style="background:var(--series-aqua)"></span>Valor efetivado</span>
+    </div>
+    <div class="table-scroll" style="margin-top:18px;">
+      <table class="data-table" id="channelTable"></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Explorar por canal</div>
+    <div class="section-sub">Selecione um canal para ver valor orçado, valor efetivado, ticket médio e o perfil demográfico dos leads daquele canal.</div>
+    <div class="chips" id="channelChips"></div>
+    <div class="stat-grid" id="channelKpis" style="margin-bottom:20px;"></div>
+    <div class="cols-3">
+      <div>
+        <div class="section-title" style="font-size:13px;">Gênero</div>
+        <div id="genderDonut"></div>
+      </div>
+      <div>
+        <div class="section-title" style="font-size:13px;">Faixa etária</div>
+        <div class="hbar-list" id="ageBars"></div>
+      </div>
+      <div>
+        <div class="section-title" style="font-size:13px;">Top cidades</div>
+        <div class="hbar-list" id="cityBars"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Tempo de fechamento (dias entre Data Lead e Data Fechamento)</div>
+    <div class="section-sub" id="tempoSub"></div>
+    <div class="hbar-list" id="tempoBars"></div>
+    <p class="note" id="tempoNote"></p>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Vendas manuais × integração</div>
+    <div class="section-sub">Coluna "Tipo Cadastro" — cadastro feito manualmente na clínica × lead recebido via integração (Meta/Google/CRM)</div>
+    <div class="media-grid" id="tipoCadastroGrid"></div>
+    <p class="note" id="tipoCadastroNote"></p>
+  </section>
+
+  <p class="note" style="text-align:center;">Dados de "<span id="fileNote"></span>" · <span id="rowCountNote"></span> registros · gerado em <span id="genDate"></span></p>
+</div>
+
+<script>
+const RAW = [{"s": "Efetivado", "bl": "2025-11-14", "df": "2026-07-01", "fo": 19830.0, "fe": 15399.39, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Monte Castelo", "ge": "Feminino", "ida": 61.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-03-05", "df": null, "fo": 9389.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Fábio Silva", "ge": "Masculino", "ida": 29.0, "tc": "Manual"}, {"s": "Efetivado", "bl": null, "df": "2026-07-01", "fo": 2760.0, "fe": 860.0, "or": "Instagram", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Morrotes", "ge": "Masculino", "ida": 49.0, "tc": null}, {"s": "Aberto", "bl": "2026-07-01", "df": null, "fo": 20776.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 64.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-04-16", "df": null, "fo": 7000.0, "fe": null, "or": "Instagram", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Santo Andre", "ge": "Feminino", "ida": 55.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-01", "df": null, "fo": 6695.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Laguna", "ba": "Ponta Das Laranjeiras", "ge": "Feminino", "ida": 58.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-01", "df": null, "fo": 6320.0, "fe": null, "or": "Facebook", "es": "Santa Catarina", "mu": "Pescaria Brava", "ba": "Ponta Das Laranjeiras", "ge": "Masculino", "ida": 64.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-06-30", "df": null, "fo": 9353.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Praia Redonda", "ge": "Masculino", "ida": 24.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-06-30", "df": null, "fo": 6500.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 66.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-02", "df": null, "fo": 22372.0, "fe": null, "or": "Indicação", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Treze De Maio", "ge": "Masculino", "ida": 41.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-01", "df": null, "fo": 18540.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santo Antônio De Pádua", "ge": "Masculino", "ida": 59.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-01", "df": null, "fo": 1430.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santo Antônio De Pádua", "ge": "Masculino", "ida": 38.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-02", "df": null, "fo": 1584.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Martinho", "ge": "Feminino", "ida": 26.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-02", "df": null, "fo": 15640.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Feminino", "ida": 76.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 4800.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Feminino", "ida": 79.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2025-09-24", "df": null, "fo": 4590.0, "fe": null, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passo Do Gado", "ge": "Feminino", "ida": 29.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 4998.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 30.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-06", "df": "2026-07-06", "fo": 2580.0, "fe": 2580.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 28.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-01", "df": null, "fo": 9190.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Três De Maio ", "ge": "Feminino", "ida": 39.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-02", "df": null, "fo": 16990.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Braco Do Norte", "ba": "Riacho Alegre ", "ge": "Feminino", "ida": 53.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-01-05", "df": "2026-07-07", "fo": 585.0, "fe": 585.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Martinho", "ge": "Feminino", "ida": 50.0, "tc": "Manual"}, {"s": "Aberto", "bl": null, "df": null, "fo": 17130.0, "fe": null, "or": "Site", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Campestre", "ge": "Masculino", "ida": 39.0, "tc": null}, {"s": "Efetivado", "bl": "2026-07-06", "df": "2026-07-08", "fo": 4500.0, "fe": 240.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 39.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-06", "df": "2026-07-08", "fo": 1500.0, "fe": 1500.0, "or": "Instagram - FNP", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 7.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-02", "df": "2026-07-15", "fo": 5400.0, "fe": 5400.0, "or": "Indicação", "es": "Rio Grande Do Sul", "mu": "Santo Antonio Da Patrulha", "ba": "Monte Negro", "ge": "Masculino", "ida": 15.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-07", "df": "2026-07-08", "fo": 22600.0, "fe": 8000.36, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Caçador ", "ge": "Feminino", "ida": 50.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 15610.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Centro ", "ge": "Feminino", "ida": 26.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-06", "df": null, "fo": 17150.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 69.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-05", "df": null, "fo": 12660.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Masculino", "ida": 45.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-08", "df": null, "fo": 11080.0, "fe": null, "or": "Google", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 25.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-07", "df": null, "fo": 5716.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Humaitá", "ge": "Feminino", "ida": 48.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-04", "df": "2026-07-08", "fo": 26000.04, "fe": 25500.02, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Jaguaruna", "ba": "Camacho ", "ge": "Masculino", "ida": 74.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-01", "df": "2026-07-08", "fo": 660.0, "fe": 660.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Humaitá", "ge": "Feminino", "ida": 23.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-08", "df": null, "fo": 11840.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Sertão Dos Correias", "ge": "Masculino", "ida": 56.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2021-11-16", "df": null, "fo": 19329.0, "fe": null, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Recife", "ge": "Masculino", "ida": 64.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-07", "df": null, "fo": 3040.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Masculino", "ida": 43.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2024-04-01", "df": null, "fo": 19699.0, "fe": null, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Campestre", "ge": "Feminino", "ida": 31.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2024-07-25", "df": null, "fo": 6478.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 24.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-07", "df": null, "fo": 7239.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Clemente", "ge": "Feminino", "ida": 20.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-06-15", "df": null, "fo": 3775.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 18.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-07", "df": null, "fo": 8070.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Vila Flor ", "ge": "Masculino", "ida": 37.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-07", "df": null, "fo": 8000.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Feminino", "ida": 58.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 14478.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Direita)", "ge": "Masculino", "ida": 51.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-09", "df": "2026-07-21", "fo": 3580.0, "fe": 3579.67, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 41.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-09", "df": "2026-07-20", "fo": 15400.0, "fe": 6999.69, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Pescaria Brava", "ba": "Sertão De Baixo", "ge": "Masculino", "ida": 53.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-04-08", "df": "2026-07-21", "fo": 18200.0, "fe": 2800.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 83.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-13", "df": "2026-07-31", "fo": 11640.0, "fe": 11139.86, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 46.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 19078.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Centro ", "ge": "Masculino", "ida": 16.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-08", "df": null, "fo": 5378.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 25.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 3161.5, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Santa Lucia ", "ge": "Masculino", "ida": 27.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-13", "df": "2026-07-13", "fo": 4800.0, "fe": 4800.0, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Morrotes", "ge": "Feminino", "ida": 86.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-08", "df": null, "fo": 33280.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Gravatal", "ba": "Estrada Geral", "ge": "Feminino", "ida": 64.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-13", "df": null, "fo": 1450.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Campestre", "ge": "Feminino", "ida": 17.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-08", "df": null, "fo": 11787.0, "fe": null, "or": "Instagram - WhatsApp", "es": "-1", "mu": null, "ba": null, "ge": "Masculino", "ida": 21.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2025-09-10", "df": null, "fo": 6280.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 49.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2024-08-06", "df": "2026-07-15", "fo": 2060.0, "fe": 2059.98, "or": "Google", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Fábio Silva", "ge": "Feminino", "ida": 33.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-14", "df": null, "fo": 200.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 65.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-13", "df": null, "fo": 19410.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Feminino", "ida": 39.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2024-12-24", "df": "2026-07-15", "fo": 660.0, "fe": 660.0, "or": "Google", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Aeroporto", "ge": "Masculino", "ida": 22.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2024-03-04", "df": null, "fo": 6380.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 63.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-15", "df": "2026-07-15", "fo": 180.0, "fe": 180.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 46.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-13", "df": null, "fo": 15900.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Martinho", "ge": "Feminino", "ida": 25.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-07", "df": null, "fo": 5818.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 19.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-10", "df": null, "fo": 9000.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Direita)", "ge": "Feminino", "ida": 36.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-13", "df": null, "fo": 6088.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passo Do Gado", "ge": "Feminino", "ida": 25.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-15", "df": null, "fo": 800.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passo Do Gado", "ge": "Masculino", "ida": 59.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-16", "df": "2026-07-16", "fo": 3000.0, "fe": 1260.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santo Antônio De Pádua", "ge": "Masculino", "ida": 30.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-14", "df": null, "fo": 7048.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santa Luzia", "ge": "Feminino", "ida": 38.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-12", "df": null, "fo": 4995.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 46.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-16", "df": "2026-07-16", "fo": 1880.0, "fe": 1880.0, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Masculino", "ida": 55.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-14", "df": null, "fo": 200.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Alfredo Wagner", "ba": "Santo André ", "ge": "Feminino", "ida": 23.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-14", "df": null, "fo": 1720.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Masculino", "ida": 10.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2025-06-27", "df": null, "fo": 29400.0, "fe": null, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Martinho", "ge": "Masculino", "ida": 51.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-15", "df": "2026-07-17", "fo": 10322.5, "fe": 730.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 25.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-15", "df": "2026-07-17", "fo": 2120.0, "fe": 380.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 39.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2023-11-20", "df": "2026-07-31", "fo": 200.0, "fe": 200.0, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Centro ", "ge": "Feminino", "ida": 48.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-16", "df": null, "fo": 19322.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Tres De Maio", "ge": "Feminino", "ida": 36.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-06-11", "df": null, "fo": 600.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 47.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-03", "df": null, "fo": 10234.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Morrotes", "ge": "Feminino", "ida": 48.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2025-01-14", "df": "2026-07-17", "fo": 380.0, "fe": 380.0, "or": "Google", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santo Antônio De Pádua", "ge": "Feminino", "ida": 24.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-13", "df": "2026-07-21", "fo": 2945.0, "fe": 1830.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Masculino", "ida": 33.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2024-01-05", "df": "2026-07-17", "fo": 2010.0, "fe": 2010.0, "or": "Instagram", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santo Antônio De Pádua", "ge": "Feminino", "ida": 45.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2025-07-15", "df": "2026-07-17", "fo": 500.0, "fe": 500.0, "or": "Instagram", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Clemente", "ge": "Masculino", "ida": 25.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-16", "df": null, "fo": 30260.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Pescaria Brava", "ba": "Sertão Da Estiva ", "ge": "Feminino", "ida": 46.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-11", "df": null, "fo": 9840.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 29.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-15", "df": null, "fo": 3996.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Santo Antônio De Pádua", "ge": "Masculino", "ida": 33.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-17", "df": "2026-07-20", "fo": 5580.0, "fe": 5580.15, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 53.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-14", "df": null, "fo": 5660.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 26.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-14", "df": null, "fo": 22260.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Jaguaruna", "ba": "Garopaba Do Sul ", "ge": "Feminino", "ida": 62.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-20", "df": null, "fo": 562.5, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 36.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-09", "df": null, "fo": 5810.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Masculino", "ida": 44.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-01-12", "df": "2026-08-04", "fo": 2930.0, "fe": 2930.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passo Do Gado", "ge": "Feminino", "ida": 70.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-21", "df": "2026-07-22", "fo": 1760.0, "fe": 1760.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 26.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-21", "df": null, "fo": 11870.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 26.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-20", "df": "2026-07-22", "fo": 4170.0, "fe": 4170.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 30.0, "tc": "Integração"}, {"s": "Efetivado", "bl": null, "df": "2026-07-22", "fo": 3060.0, "fe": 660.0, "or": "Reavaliação/Já sou Paciente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Cristóvão", "ge": "Masculino", "ida": 44.0, "tc": null}, {"s": "Aberto", "bl": null, "df": null, "fo": 2617.5, "fe": null, "or": "Indicação", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passo Do Gado", "ge": "Masculino", "ida": 29.0, "tc": null}, {"s": "Aberto", "bl": "2023-07-25", "df": null, "fo": 13440.0, "fe": null, "or": "Site", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 44.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-20", "df": null, "fo": 26379.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São Martinho", "ge": "Masculino", "ida": 48.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-05-13", "df": null, "fo": 1680.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 8.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-19", "df": null, "fo": 4450.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Vila Flor ", "ge": "Feminino", "ida": 41.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-21", "df": "2026-07-23", "fo": 4660.0, "fe": 4305.98, "or": "Google", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 57.0, "tc": "Manual"}, {"s": "Efetivado", "bl": null, "df": "2026-07-23", "fo": 780.0, "fe": 780.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Feminino", "ida": 40.0, "tc": null}, {"s": "Aberto", "bl": "2026-07-17", "df": null, "fo": 8841.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 48.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-10", "df": null, "fo": 14320.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 48.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-24", "df": "2026-07-24", "fo": 3110.0, "fe": 1100.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Alvorada", "ge": "Feminino", "ida": 24.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-24", "df": null, "fo": 3165.0, "fe": null, "or": "Outros", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Masculino", "ida": 41.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-20", "df": null, "fo": 62972.5, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 57.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-24", "df": null, "fo": 19424.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 63.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-23", "df": "2026-07-24", "fo": 4600.0, "fe": 4600.1, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Praia Redonda", "ge": "Feminino", "ida": 38.0, "tc": "Integração"}, {"s": "Efetivado", "bl": null, "df": "2026-07-24", "fo": 180.0, "fe": 180.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Masculino", "ida": 16.0, "tc": null}, {"s": "Efetivado", "bl": "2026-07-22", "df": "2026-07-27", "fo": 5000.0, "fe": 4999.94, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Monte Castelo", "ge": "Masculino", "ida": 63.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-23", "df": "2026-07-27", "fo": 5300.03, "fe": 5299.97, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 76.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-23", "df": "2026-08-04", "fo": 13648.0, "fe": 5379.89, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 70.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-22", "df": null, "fo": 6029.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Ilhotinha", "ge": "Feminino", "ida": 26.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-22", "df": null, "fo": 6810.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 49.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-27", "df": null, "fo": 5998.0, "fe": null, "or": "Fachada/Passou em Frente", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Fábio Silva", "ge": "Feminino", "ida": 19.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-24", "df": "2026-07-27", "fo": 7520.0, "fe": 727.98, "or": "Chatwoot - WhatsApp", "es": "Rio Grande Do Sul", "mu": "Novo Hamburgo", "ba": "Santo Afonso", "ge": "Masculino", "ida": 22.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-22", "df": null, "fo": 26786.5, "fe": null, "or": "Facebook - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Direita)", "ge": "Feminino", "ida": 43.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-27", "df": null, "fo": 8403.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Feminino", "ida": 62.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-27", "df": "2026-07-29", "fo": 9859.0, "fe": 4600.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Esperança", "ge": "Feminino", "ida": 42.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-23", "df": null, "fo": 21969.0, "fe": null, "or": "Facebook - WhatsApp", "es": "Rio Grande Do Sul", "mu": "Rio Grande", "ba": "Miguel De Castro Moreira", "ge": "Masculino", "ida": 52.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-13", "df": null, "fo": 17916.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 46.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-27", "df": "2026-07-28", "fo": 900.0, "fe": 1700.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 21.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-27", "df": "2026-07-28", "fo": 5228.0, "fe": 594.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 20.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-28", "df": "2026-07-31", "fo": 1600.0, "fe": 1000.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Esperança", "ge": "Feminino", "ida": 15.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2024-06-21", "df": "2026-08-11", "fo": 800.0, "fe": 800.0, "or": "Indicação", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Revoredo", "ge": "Feminino", "ida": 9.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-24", "df": null, "fo": 17999.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Masculino", "ida": 28.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-28", "df": null, "fo": 4179.0, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Feminino", "ida": 42.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-03-09", "df": "2026-07-29", "fo": 660.0, "fe": 660.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Praia Redonda", "ge": "Feminino", "ida": 18.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-29", "df": null, "fo": 6500.0, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Capivari De Baixo", "ba": "Tres De Maio", "ge": "Feminino", "ida": 40.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-29", "df": null, "fo": 2982.5, "fe": null, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 32.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-28", "df": null, "fo": 15765.5, "fe": null, "or": "Instagram - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Morrotes", "ge": "Masculino", "ida": 25.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-29", "df": "2026-07-29", "fo": 4680.0, "fe": 4679.55, "or": "Indicação", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Feminino", "ida": 11.0, "tc": "Manual"}, {"s": "Efetivado", "bl": null, "df": "2026-07-29", "fo": 7680.0, "fe": 7680.0, "or": "Site", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Masculino", "ida": 21.0, "tc": null}, {"s": "Aberto", "bl": "2026-07-29", "df": null, "fo": 10017.5, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Armazem", "ba": "Jose Nazario ", "ge": "Masculino", "ida": 41.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-20", "df": null, "fo": 8710.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Centro", "ge": "Masculino", "ida": 35.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-29", "df": "2026-07-30", "fo": 13700.0, "fe": 13700.0, "or": "Facebook", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Passagem", "ge": "Feminino", "ida": 55.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-30", "df": "2026-07-31", "fo": 700.0, "fe": 700.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Sao Jose", "ba": "Serraria", "ge": "Feminino", "ida": 64.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-30", "df": "2026-07-31", "fo": 16812.0, "fe": 2900.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Laguna", "ba": "Campos Verdes", "ge": "Masculino", "ida": 36.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2025-02-21", "df": "2026-07-31", "fo": 1000.0, "fe": 200.0, "or": "Indicação", "es": "Santa Catarina", "mu": "Sao Jose", "ba": "Serraria", "ge": "Masculino", "ida": 69.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2026-07-29", "df": "2026-07-30", "fo": 6800.0, "fe": 6800.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Oficinas", "ge": "Feminino", "ida": 29.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-28", "df": "2026-07-30", "fo": 4686.5, "fe": 585.0, "or": "WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Masculino", "ida": 18.0, "tc": "Manual"}, {"s": "Efetivado", "bl": "2024-11-18", "df": "2026-08-04", "fo": 10960.0, "fe": 10960.0, "or": "Instagram", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Dehon", "ge": "Feminino", "ida": 46.0, "tc": "Manual"}, {"s": "Aberto", "bl": "2026-07-29", "df": null, "fo": 1900.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "Vila Moema", "ge": "Masculino", "ida": 8.0, "tc": "Integração"}, {"s": "Efetivado", "bl": "2026-07-23", "df": "2026-08-13", "fo": 350.0, "fe": 350.0, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Criciuma", "ba": "Pinheirinho", "ge": "Feminino", "ida": 43.0, "tc": "Integração"}, {"s": "Aberto", "bl": "2026-07-30", "df": null, "fo": 1400.0, "fe": null, "or": "Chatwoot - WhatsApp", "es": "Santa Catarina", "mu": "Tubarao", "ba": "São João (Margem Esquerda)", "ge": "Feminino", "ida": 7.0, "tc": "Integração"}];
+
+const COLORS = {
+  blue: 'var(--series-blue)', orange:'var(--series-orange)', aqua:'var(--series-aqua)',
+  yellow:'var(--series-yellow)', magenta:'var(--series-magenta)', green:'var(--series-green)',
+  violet:'var(--series-violet)', red:'var(--series-red)'
+};
+
+function parseD(s){ return s ? new Date(s+'T00:00:00') : null; }
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+function fmtBRL(v){ return (v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL', maximumFractionDigits:0}); }
+function fmtBRLc(v){
+  v = v||0;
+  if (Math.abs(v) >= 1e6) return 'R$ ' + (v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1}) + ' mi';
+  if (Math.abs(v) >= 1e3) return 'R$ ' + (v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1}) + ' mil';
+  return fmtBRL(v);
+}
+function fmtNum(v){ return (v||0).toLocaleString('pt-BR'); }
+function fmtPct(v){ return (v||0).toLocaleString('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1}) + '%'; }
+function esc(s){ return (s==null?'': String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function ageBucket(age){
+  if (age == null) return 'N/D';
+  if (age < 18) return '0-17';
+  if (age < 25) return '18-24';
+  if (age < 35) return '25-34';
+  if (age < 45) return '35-44';
+  if (age < 55) return '45-54';
+  if (age < 65) return '55-64';
+  return '65+';
+}
+const AGE_ORDER = ['0-17','18-24','25-34','35-44','45-54','55-64','65+','N/D'];
+
+// ---- header info ----
+document.getElementById('headerSub').textContent =
+  `Leads de 01/07/2026 a 30/07/2026 · ${RAW.length} registros`;
+document.getElementById('fileNote').textContent = 'Orçamentos 7 1.xlsx';
+document.getElementById('rowCountNote').textContent = RAW.length;
+document.getElementById('genDate').textContent = new Date().toLocaleDateString('pt-BR');
+
+// ---- core stats ----
+function computeStats(rows){
+  const total = rows.length;
+  const efet = rows.filter(r=>r.s==='Efetivado');
+  const aberto = rows.filter(r=>r.s==='Aberto');
+  const naoContatar = rows.filter(r=>r.s==='Não Contatar');
+  const valorOrcado = rows.reduce((a,r)=>a+(r.fo||0),0);
+  const valorEfetivado = efet.reduce((a,r)=>a+(r.fe||0),0);
+  const ticketMedio = efet.length ? valorEfetivado/efet.length : 0;
+  const tempos = [];
+  efet.forEach(r=>{
+    if (r.bl && r.df){
+      const d = daysBetween(parseD(r.bl), parseD(r.df));
+      if (d>=0) tempos.push(d);
+    }
+  });
+  tempos.sort((a,b)=>a-b);
+  const mediana = tempos.length ? (tempos.length%2 ? tempos[(tempos.length-1)/2] : (tempos[tempos.length/2-1]+tempos[tempos.length/2])/2) : null;
+  const media = tempos.length ? tempos.reduce((a,b)=>a+b,0)/tempos.length : null;
+
+  const genero = {};
+  rows.forEach(r=>{ const g = r.ge || 'N/D'; genero[g] = (genero[g]||0)+1; });
+
+  const idadeBuckets = {};
+  rows.forEach(r=>{ const b = ageBucket(r.ida); idadeBuckets[b] = (idadeBuckets[b]||0)+1; });
+
+  const cidades = {};
+  rows.forEach(r=>{ const c = r.mu || 'N/D'; cidades[c] = (cidades[c]||0)+1; });
+
+  return { total, efetivados: efet.length, abertos: aberto.length, naoContatar: naoContatar.length,
+    taxaConversao: total ? efet.length/total*100 : 0,
+    valorOrcado, valorEfetivado, ticketMedio, tempos, mediana, media,
+    genero, idadeBuckets, cidades };
+}
+
+const GLOBAL = computeStats(RAW);
+
+// ---- KPI tiles ----
+function statTile(label, value, cap){
+  return `<div class="stat-tile"><div class="stat-label">${esc(label)}</div><div class="stat-value">${value}</div>${cap?`<div class="stat-cap">${cap}</div>`:''}</div>`;
+}
+document.getElementById('kpiGrid').innerHTML = [
+  statTile('Total de leads', fmtNum(GLOBAL.total), `${GLOBAL.efetivados} efetivados · ${GLOBAL.abertos} abertos`),
+  statTile('Taxa de conversão', fmtPct(GLOBAL.taxaConversao), `${GLOBAL.efetivados} de ${GLOBAL.total} leads`),
+  statTile('Valor orçado (total)', fmtBRLc(GLOBAL.valorOrcado), fmtBRL(GLOBAL.valorOrcado)),
+  statTile('Valor efetivado (total)', fmtBRLc(GLOBAL.valorEfetivado), fmtBRL(GLOBAL.valorEfetivado)),
+  statTile('Ticket médio', fmtBRL(GLOBAL.ticketMedio), `${GLOBAL.efetivados} vendas efetivadas`),
+  statTile('Tempo mediano de fechamento', (GLOBAL.mediana!=null?fmtNum(GLOBAL.mediana):'—')+' dias', `média ${GLOBAL.media!=null?fmtNum(Math.round(GLOBAL.media)):'—'} dias (puxada por leads antigos)`),
+].join('');
+
+// ---- donut builder ----
+function buildDonut(container, segments, centerLabel){
+  const total = segments.reduce((a,s)=>a+s.value,0);
+  let acc = 0;
+  const stops = segments.map(s=>{
+    const start = total? acc/total*360 : 0;
+    acc += s.value;
+    const end = total? acc/total*360 : 0;
+    return `${s.color} ${start}deg ${end}deg`;
+  }).join(', ');
+  const legend = segments.map(s=>`
+    <div class="item">
+      <span class="k"><span class="swatch" style="background:${s.color}"></span>${esc(s.label)}</span>
+      <span class="v">${fmtNum(s.value)} (${fmtPct(total?s.value/total*100:0)})</span>
+    </div>`).join('');
+  container.innerHTML = `
+    <div class="donut-wrap">
+      <div class="donut" style="background: conic-gradient(${stops || 'var(--gridline) 0 360deg'})">
+        <div class="donut-center"><b>${fmtNum(total)}</b><span>${esc(centerLabel)}</span></div>
+      </div>
+      <div class="donut-legend">${legend}</div>
+    </div>`;
+}
+
+buildDonut(document.getElementById('statusDonut'), [
+  {label:'Efetivado', value:GLOBAL.efetivados, color:'var(--series-aqua)'},
+  {label:'Aberto', value:GLOBAL.abertos, color:'var(--series-yellow)'},
+  {label:'Não Contatar', value:GLOBAL.naoContatar, color:'var(--series-red)'},
+].filter(s=>s.value>0), 'leads');
+
+// ---- media groups ----
+const GROUP_MAP = {
+  'Facebook':'Meta Ads', 'Facebook - WhatsApp':'Meta Ads', 'Instagram':'Meta Ads', 'Instagram - WhatsApp':'Meta Ads', 'Instagram - FNP':'Meta Ads',
+  'Google':'Google Ads',
+  'WhatsApp':'Direto/Orgânico', 'Chatwoot - WhatsApp':'Direto/Orgânico', 'Site':'Direto/Orgânico',
+  'Fachada/Passou em Frente':'Fachada (loja física)',
+  'Indicação':'Indicação',
+  'Reavaliação/Já sou Paciente':'Base de pacientes'
+};
+const GROUP_ORDER = ['Meta Ads','Google Ads','Direto/Orgânico','Fachada (loja física)','Indicação','Base de pacientes','Outros'];
+const GROUP_COLOR = {'Meta Ads':'var(--series-blue)','Google Ads':'var(--series-orange)','Direto/Orgânico':'var(--series-aqua)','Fachada (loja física)':'var(--series-yellow)','Indicação':'var(--series-magenta)','Base de pacientes':'var(--series-violet)','Outros':'var(--baseline)'};
+
+const groupRows = {};
+GROUP_ORDER.forEach(g=>groupRows[g]=[]);
+RAW.forEach(r=>{
+  const g = GROUP_MAP[r.or] || 'Outros';
+  if (!groupRows[g]) groupRows[g] = [];
+  groupRows[g].push(r);
+});
+
+document.getElementById('mediaGrid').innerHTML = GROUP_ORDER.filter(g=>(groupRows[g]||[]).length>0).map(g=>{
+  const st = computeStats(groupRows[g]||[]);
+  return `<div class="media-card" style="--c:${GROUP_COLOR[g]}">
+    <div class="mc-title">${esc(g)}</div>
+    <div class="mc-row"><span>Leads</span><b>${fmtNum(st.total)}</b></div>
+    <div class="mc-row"><span>Conversão</span><b>${fmtPct(st.taxaConversao)}</b></div>
+    <div class="mc-row"><span>Orçado</span><b>${fmtBRLc(st.valorOrcado)}</b></div>
+    <div class="mc-row"><span>Efetivado</span><b>${fmtBRLc(st.valorEfetivado)}</b></div>
+    <div class="mc-row"><span>Ticket médio</span><b>${fmtBRL(st.ticketMedio)}</b></div>
+  </div>`;
+}).join('');
+
+// ---- channel comparison (per raw Origem) ----
+const originRows = {};
+RAW.forEach(r=>{
+  const o = r.or || 'N/D';
+  (originRows[o] = originRows[o]||[]).push(r);
+});
+const channelStats = Object.keys(originRows).map(o=>({ origem:o, ...computeStats(originRows[o]) }))
+  .sort((a,b)=>b.valorOrcado-a.valorOrcado);
+
+const maxChVal = Math.max(...channelStats.map(c=>Math.max(c.valorOrcado, c.valorEfetivado)));
+document.getElementById('channelBars').innerHTML = channelStats.map(c=>{
+  const wA = maxChVal ? Math.max(c.valorOrcado/maxChVal*100, c.valorOrcado>0?2:0) : 0;
+  const wB = maxChVal ? Math.max(c.valorEfetivado/maxChVal*100, c.valorEfetivado>0?2:0) : 0;
+  return `<div class="gbar-row" title="${esc(c.origem)}">
+    <div class="lbl">${esc(c.origem)}</div>
+    <div class="gbar-bars">
+      <div class="gbar-track"><div class="gbar-fill a" style="width:${wA}%"></div><span class="gbar-tag">${fmtBRLc(c.valorOrcado)}</span></div>
+      <div class="gbar-track"><div class="gbar-fill b" style="width:${wB}%"></div><span class="gbar-tag">${fmtBRLc(c.valorEfetivado)}</span></div>
+    </div>
+  </div>`;
+}).join('');
+
+document.getElementById('channelTable').innerHTML = `
+  <thead><tr>
+    <th>Canal</th><th>Leads</th><th>Efetivados</th><th>Conversão</th>
+    <th>Valor orçado</th><th>Valor efetivado</th><th>Ticket médio</th><th>Tempo mediano</th>
+  </tr></thead>
+  <tbody>
+  ${channelStats.map(c=>`<tr>
+    <td>${esc(c.origem)}</td>
+    <td>${fmtNum(c.total)}</td>
+    <td>${fmtNum(c.efetivados)}</td>
+    <td>${fmtPct(c.taxaConversao)}</td>
+    <td>${fmtBRL(c.valorOrcado)}</td>
+    <td>${fmtBRL(c.valorEfetivado)}</td>
+    <td>${c.efetivados? fmtBRL(c.ticketMedio):'—'}</td>
+    <td>${c.mediana!=null? fmtNum(c.mediana)+' d':'—'}</td>
+  </tr>`).join('')}
+  <tr style="font-weight:650;">
+    <td>Total</td>
+    <td>${fmtNum(GLOBAL.total)}</td>
+    <td>${fmtNum(GLOBAL.efetivados)}</td>
+    <td>${fmtPct(GLOBAL.taxaConversao)}</td>
+    <td>${fmtBRL(GLOBAL.valorOrcado)}</td>
+    <td>${fmtBRL(GLOBAL.valorEfetivado)}</td>
+    <td>${fmtBRL(GLOBAL.ticketMedio)}</td>
+    <td>${GLOBAL.mediana!=null? fmtNum(GLOBAL.mediana)+' d':'—'}</td>
+  </tr>
+  </tbody>`;
+
+// ---- explorer (chips) ----
+const CHANNELS = Object.keys(originRows).sort((a,b)=>originRows[b].length-originRows[a].length);
+let activeChannel = 'Todos';
+
+function hbarList(obj, order){
+  const entries = order ? order.filter(k=>obj[k]).map(k=>[k,obj[k]]) : Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max = Math.max(...entries.map(e=>e[1]), 1);
+  return entries.map(([k,v])=>{
+    const w = Math.max(v/max*100, v>0?3:0);
+    return `<div class="hbar-row">
+      <div class="lbl" title="${esc(k)}">${esc(k)}</div>
+      <div class="hbar-track" style="display:flex;align-items:center;">
+        <div class="hbar-fill" style="width:${w}%;"></div>
+        <span class="hbar-val">${fmtNum(v)}</span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty-msg">Sem dados</div>';
+}
+
+function renderChannelPanel(){
+  const rows = activeChannel==='Todos' ? RAW : (originRows[activeChannel]||[]);
+  const st = computeStats(rows);
+  document.getElementById('channelKpis').innerHTML = [
+    statTile('Leads', fmtNum(st.total), `${fmtPct(st.taxaConversao)} de conversão`),
+    statTile('Valor orçado', fmtBRLc(st.valorOrcado), fmtBRL(st.valorOrcado)),
+    statTile('Valor efetivado', fmtBRLc(st.valorEfetivado), fmtBRL(st.valorEfetivado)),
+    statTile('Ticket médio', st.efetivados?fmtBRL(st.ticketMedio):'—', `${st.efetivados} vendas`),
+    statTile('Tempo mediano', st.mediana!=null?fmtNum(st.mediana)+' dias':'—', 'lead → fechamento'),
+    statTile('Efetivados / Abertos', `${st.efetivados} / ${st.abertos}`, st.naoContatar?`${st.naoContatar} não contatar`:''),
+  ].join('');
+
+  buildDonut(document.getElementById('genderDonut'), [
+    {label:'Feminino', value: st.genero['Feminino']||0, color:'var(--series-magenta)'},
+    {label:'Masculino', value: st.genero['Masculino']||0, color:'var(--series-blue)'},
+    ...(st.genero['N/D']? [{label:'N/D', value:st.genero['N/D'], color:'var(--baseline)'}]:[])
+  ].filter(s=>s.value>0), 'leads');
+
+  document.getElementById('ageBars').innerHTML = hbarList(st.idadeBuckets, AGE_ORDER);
+  document.getElementById('cityBars').innerHTML = hbarList(st.cidades);
+}
+
+document.getElementById('channelChips').innerHTML =
+  [`<button class="chip active" data-c="Todos">Todos</button>`]
+  .concat(CHANNELS.map(c=>`<button class="chip" data-c="${esc(c)}">${esc(c)}</button>`)).join('');
+
+document.getElementById('channelChips').addEventListener('click', e=>{
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  activeChannel = btn.dataset.c;
+  document.querySelectorAll('#channelChips .chip').forEach(b=>b.classList.toggle('active', b===btn));
+  renderChannelPanel();
+});
+renderChannelPanel();
+
+// ---- tempo de fechamento histogram ----
+const buckets = [
+  {label:'0 dias', test:d=>d===0},
+  {label:'1-3 dias', test:d=>d>=1&&d<=3},
+  {label:'4-7 dias', test:d=>d>=4&&d<=7},
+  {label:'8-14 dias', test:d=>d>=8&&d<=14},
+  {label:'15-30 dias', test:d=>d>=15&&d<=30},
+  {label:'31-60 dias', test:d=>d>=31&&d<=60},
+  {label:'61-180 dias', test:d=>d>=61&&d<=180},
+  {label:'180+ dias', test:d=>d>180},
+];
+const bucketCounts = buckets.map(b=>({label:b.label, value: GLOBAL.tempos.filter(b.test).length}));
+const maxBucket = Math.max(...bucketCounts.map(b=>b.value),1);
+document.getElementById('tempoBars').innerHTML = bucketCounts.map(b=>{
+  const w = Math.max(b.value/maxBucket*100, b.value>0?3:0);
+  return `<div class="hbar-row">
+    <div class="lbl">${esc(b.label)}</div>
+    <div class="hbar-track" style="display:flex;align-items:center;">
+      <div class="hbar-fill" style="width:${w}%;"></div>
+      <span class="hbar-val">${fmtNum(b.value)}</span>
+    </div>
+  </div>`;
+}).join('');
+document.getElementById('tempoSub').textContent = `Baseado em ${GLOBAL.tempos.length} leads efetivados com as duas datas preenchidas · mediana ${GLOBAL.mediana!=null?fmtNum(GLOBAL.mediana):'—'} dias`;
+document.getElementById('tempoNote').textContent = 'Nota: a média geral (' + (GLOBAL.media!=null?fmtNum(Math.round(GLOBAL.media)):'—') + ' dias) é bem maior que a mediana porque alguns cadastros manuais têm Data Lead muito antiga (leads reativados anos depois). Por isso a mediana é o número mais confiável para acompanhar o ritmo real de fechamento.';
+
+// ---- vendas manuais x integração (coluna I - Tipo Cadastro) ----
+const TC_ORDER = ['Manual','Integração'];
+const TC_COLOR = {'Manual':'var(--series-blue)','Integração':'var(--series-aqua)','Não informado':'var(--baseline)'};
+const tcRows = {};
+RAW.forEach(r=>{
+  const t = r.tc || 'Não informado';
+  (tcRows[t] = tcRows[t]||[]).push(r);
+});
+const tcKeysExtra = Object.keys(tcRows).filter(k=>!TC_ORDER.includes(k));
+const tcAllOrder = TC_ORDER.concat(tcKeysExtra);
+
+document.getElementById('tipoCadastroGrid').innerHTML = tcAllOrder.filter(t=>(tcRows[t]||[]).length>0).map(t=>{
+  const st = computeStats(tcRows[t]||[]);
+  return `<div class="media-card" style="--c:${TC_COLOR[t]||'var(--series-violet)'}">
+    <div class="mc-title">${esc(t)}</div>
+    <div class="mc-row"><span>Leads</span><b>${fmtNum(st.total)}</b></div>
+    <div class="mc-row"><span>Conversão</span><b>${fmtPct(st.taxaConversao)}</b></div>
+    <div class="mc-row"><span>Valor orçado</span><b>${fmtBRLc(st.valorOrcado)}</b></div>
+    <div class="mc-row"><span>Valor efetivado</span><b>${fmtBRLc(st.valorEfetivado)}</b></div>
+    <div class="mc-row"><span>Ticket médio</span><b>${st.efetivados?fmtBRL(st.ticketMedio):'—'}</b></div>
+  </div>`;
+}).join('');
+
+const naoInformado = (tcRows['Não informado']||[]).length;
+document.getElementById('tipoCadastroNote').textContent = naoInformado
+  ? `${naoInformado} registro(s) sem "Tipo Cadastro" preenchido (geralmente pacientes já cadastrados na base) não entram em Manual nem Integração, mas estão inclusos nos totais gerais do topo da página.`
+  : '';
+</script>
